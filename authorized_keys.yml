@@ -1,0 +1,29 @@
+---
+- name: update authorized_keys
+  hosts: rpi02
+  become: True
+  tasks:
+    vars:
+      username: {{ ansible_facts['ansible_env']['USER'] }} 
+    - name: Get local hostname
+      local_action: hostname
+      register: local_hostname
+    - name: Get local username
+      local_action: whoami
+      register: local_username
+    - name: Get cert info
+      local_action: ssh-keygen -L -f {{ ca-file }} | sed 's/^/#/'
+      register: cert-info
+    - name: modify authorized_keys
+      blockinfile:
+        dest: ~{{ username }}/.ssh/authorized_keys
+        owner: {{ username }}
+        mode: 0600
+        create: yes
+        backup: yes
+        marker: ### {mark} ansible-maintianed {{ username }} ssh cert ###
+        block: |
+          Updated: {{ ansible_facts['ansible_date_time']['iso8601'] }}
+          By: {{ local_username }}@{{ local_hostname }}
+          cert-authority {{ lookup('file', {ca-file} }}
+          {{ dert-info }}
