@@ -2,8 +2,10 @@
 
 PRIVATE=$1      #path/filename for user private key
 CA=$2           #path/filename for ca private key
-USERNAME=$3     #user to list as principal in cert
-IDENTITY=$4     #string to use as identity in cert
+KEYUSER=$3     #user to list as principal in cert
+KEYHOST=$4      #hostname of machine to create keys for
+
+IDENTITY="$KEYUSER@$KEYHOST"     #string to use as identity in cert
 
 PUBLIC=${PRIVATE}.pub
 CERT=${PRIVATE}-cert.pub
@@ -18,6 +20,9 @@ if [ -f $REVOKED ]; then
     APPEND=-u
 fi
 
+####Generate new key pair
+ssh-keygen -b 4096 -t rsa -C "$IDENTITY" -f $PRIVATE
+
 ###Add public key (if exists) to revoked keys
 if [ -f $PUBLIC ]; then
     echo "Found $PUBLIC"
@@ -30,9 +35,6 @@ if [ -f $CERT ]; then
     ssh-keygen -k -f $REVOKED $APPEND $CERT
 fi
 
-####Generate new key pair
-ssh-keygen -b 4096 -t rsa -f $PRIVATE
-
 ####Sign public key
-ssh-keygen -s $CA -n $USERNAME -I $IDENTITY $PUBLIC
+ssh-keygen -s $CA -n $KEYUSER -I $IDENTITY $PUBLIC
 
