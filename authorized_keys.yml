@@ -1,6 +1,6 @@
 ---
 - name: update authorized_keys
-  hosts: debian
+  hosts: "{{ variable_host | defailt('all') }}"
   tasks:
     - name: modify authorized_keys
       become: True
