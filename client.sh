@@ -2,12 +2,12 @@
 
 usage() { echo "$0 usage:" && grep " .)\ #" $0; exit 0; }
 [ $# -eq 0 ] && usage
-while getopts ":hp:c:u:h:t:" arg; do
+while getopts ":?p:c:u:h:t:" arg; do
   case $arg in
-      p) # path/filename for user private key
+      p) # path/prefix for user private key
       PRIVATE=${OPTARG}
       ;;
-      c) # path/filename for ca private key
+      c) # path/prefix for ca private key
       CA=${OPTARG}
       ;;
       u) # user to list as principal in cert
@@ -19,7 +19,7 @@ while getopts ":hp:c:u:h:t:" arg; do
       t) # key type (rsa, ed25519)
       TYPE=${OPTARG}
       ;;
-      h | *) # Display help.
+      ? | *) # Display help.
 	  usage
 	  exit 1
 	  ;;
@@ -33,14 +33,17 @@ IDENTITY="$KEYUSER@$KEYHOST"     #string to use as identity in cert
 OWD=`pwd`
 cd $KEYHOST
 
-PUBLIC=${PRIVATE}.pub
-CERT=${PRIVATE}-cert.pub
 REVOKED=revoked_keys
 OPTIONS=
 
 if [ "${TYPE}X" = "X" ]; then
     TYPE=rsa
 fi
+
+CA=${CA}_${TYPE}
+PRIVATE=${PRIVATE}_${TYPE}
+PUBLIC=${PRIVATE}.pub
+CERT=${PRIVATE}-cert.pub
 
 if [ $TYPE = "rsa" ]; then
     OPTIONS="-b 4096"
@@ -52,7 +55,7 @@ else
 fi
 
 ####Generate new key pair
-echo ssh-keygen $OPTIONS -t $TYPE -C "$IDENTITY" -f $PRIVATE
+ssh-keygen $OPTIONS -t $TYPE -C "$IDENTITY" -f $PRIVATE
 
 ###Add public key (if exists) to revoked keys
 if [ -f $PUBLIC ]; then
