@@ -1,9 +1,9 @@
 ---
 - name: update authorized_keys
-  hosts: "{{ variable_host | defailt('all') }}"
+  hosts: "{{ variable_host | default('all') }}"
   tasks:
     - name: modify authorized_keys
-      become: True
+      become: False
       blockinfile:
         dest: "~{{ ansible_user_id }}/.ssh/authorized_keys"
         owner: "{{ ansible_user_id }}"
@@ -14,4 +14,4 @@
         block: |
           #Updated  {{ ansible_date_time.iso8601 }}
           #By       {{ lookup('env', 'USER') }}@{{lookup("pipe","hostname")}}
-          cert-authority {{ lookup('file', cafile) }}
+          {{ lookup('file', cafile) }}
