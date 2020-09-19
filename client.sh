@@ -67,4 +67,3 @@ fi
 ssh-keygen -s $CA -n $KEYUSER -I $IDENTITY $PUBLIC
 
 cd $OWD
-exit 0
