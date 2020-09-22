@@ -1,0 +1,28 @@
+---
+- name: Send host keys
+  become: True
+  tasks:
+    - copy:
+        name: copy private host keys
+        src: "{{ item }}"
+        dest: /etc/ssh/
+        owner: root
+        mode: 600
+        with_fileglob:
+          - "{{ hostpath }}/*key"
+    - copy:
+        name: copy public host keys
+        src: "{{ item }}"
+        dest: /etc/ssh/
+        owner: root
+        mode: 644
+        with_fileglob:
+          - "{{ hostpath }}/*key.pub"
+    - copy:
+        name: copy certificates
+        src: "{{ item }}"
+        dest: /etc/ssh/
+        owner: root
+        mode: 644
+        with_fileglob:
+          - "{{ hostpath }}/*key-cert.pub"
