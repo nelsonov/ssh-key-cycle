@@ -1,0 +1,27 @@
+---
+- name: update known_hosts
+  hosts: "{{ variable_host | default('all') }}"
+  become: False
+  tasks:
+    - name: cp old known_hosts to /tmp, keep backup
+      copy:
+        backup: yes
+        dest: /tmp
+        src: "{{ lookup('env', 'HOME') }}/.ssh/known_hosts"
+        remote_src: yes
+        mode: preserve
+    - name: clobber known_hosts
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.ssh/known_hosts"
+        state: absent
+    - name: send new known_hosts
+      blockinfile:
+        dest: "{{ lookup('env', 'HOME') }}/.ssh/known_hosts"
+        owner: "{{ ansible_user_id }}"
+        mode: 0600
+        create: yes
+        marker: "###{mark} ansible maintianed ssh cert###"
+        block: |
+          #Updated  {{ ansible_date_time.iso8601 }}
+          #By       {{ lookup('env', 'USER') }}@{{lookup("pipe","hostname")}}
+          {{ lookup('file', cafile) }}
