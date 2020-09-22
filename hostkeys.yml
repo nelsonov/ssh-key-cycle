@@ -1,28 +1,47 @@
 ---
 - name: Send host keys
+  hosts: all
   become: True
   tasks:
-    - copy:
-        name: copy private host keys
+    - name: copy private host keys
+      copy:
         src: "{{ item }}"
         dest: /etc/ssh/
         owner: root
-        mode: 600
-        with_fileglob:
-          - "{{ hostpath }}/{{ inventory_hostname }}/*key"
-    - copy:
-        name: copy public host keys
+        mode: '0600'
+      with_fileglob:
+        - "{{ hostpath }}/{{ inventory_hostname }}/*key"
+    - name: copy public host keys
+      copy:
         src: "{{ item }}"
         dest: /etc/ssh/
         owner: root
-        mode: 644
-        with_fileglob:
-          - "{{ hostpath }}/{{ inventory_hostname }}/*key.pub"
-    - copy:
-        name: copy certificates
+        mode: '0644'
+      with_fileglob:
+        - "{{ hostpath }}/{{ inventory_hostname }}/*key.pub"
+    - name: copy certificates
+      copy:
         src: "{{ item }}"
         dest: /etc/ssh
         owner: root
-        mode: 644
-        with_fileglob:
-          - "{{ hostpath }}/{{ inventory_hostname }}/*key-cert.pub"
+        mode: '0644'
+      with_fileglob:
+        - "{{ hostpath }}/{{ inventory_hostname }}/*key-cert.pub"
+    - name: Update sshd_config
+      blockinfile:
+        dest: /etc/ssh/sshd_config
+        owner: root
+        mode: 0644
+        create: no
+        backup: yes
+        marker: "###{mark} asible maintianed ssh cert###"
+        block: |
+          #Updated  {{ ansible_date_time.iso8601 }}
+          #By       {{ lookup('env', 'USER') }}@{{lookup("pipe","hostname")}}
+          HostCertificate /etc/ssh/ssh_host_rsa_key-cert.pub
+          HostCertificate /etc/ssh/ssh_host_ecdsa_key-cert.pub
+          HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted
