@@ -9,7 +9,7 @@
         owner: root
         mode: 600
         with_fileglob:
-          - "{{ hostpath }}/*key"
+          - "{{ hostpath }}/{{ inventory_hostname }}/*key"
     - copy:
         name: copy public host keys
         src: "{{ item }}"
@@ -17,12 +17,12 @@
         owner: root
         mode: 644
         with_fileglob:
-          - "{{ hostpath }}/*key.pub"
+          - "{{ hostpath }}/{{ inventory_hostname }}/*key.pub"
     - copy:
         name: copy certificates
         src: "{{ item }}"
-        dest: /etc/ssh/
+        dest: /etc/ssh
         owner: root
         mode: 644
         with_fileglob:
-          - "{{ hostpath }}/*key-cert.pub"
+          - "{{ hostpath }}/{{ inventory_hostname }}/*key-cert.pub"
