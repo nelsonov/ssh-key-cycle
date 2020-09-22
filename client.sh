@@ -5,10 +5,10 @@ usage() { echo "$0 usage:" && grep " .)\ #" $0; exit 0; }
 while getopts ":?p:c:u:h:t:" arg; do
   case $arg in
       p) # path/prefix for user private key
-      PRIVATE=${OPTARG}
+      OPT_PRIVATE=${OPTARG}
       ;;
       c) # path/prefix for ca private key
-      CA=${OPTARG}
+      OPT_CA=${OPTARG}
       ;;
       u) # user to list as principal in cert
       KEYUSER=${OPTARG}
@@ -40,8 +40,8 @@ if [ "${TYPE}X" = "X" ]; then
     TYPE=rsa
 fi
 
-CA=${CA}_${TYPE}
-PRIVATE=${PRIVATE}_${TYPE}
+CA=${OPT_CA}_${TYPE}
+PRIVATE=${OPT_PRIVATE}_${TYPE}
 PUBLIC=${PRIVATE}.pub
 CERT=${PRIVATE}-cert.pub
 
@@ -67,3 +67,5 @@ fi
 ssh-keygen -s $CA -n $KEYUSER -I $IDENTITY $PUBLIC
 
 cd $OWD
+
+
