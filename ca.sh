@@ -10,7 +10,7 @@ while getopts ":?p:c:u:h:t:" arg; do
       u) # user identifier (ie email)
       IDENTITY=${OPTARG}
       ;;
-      t) # key type (rsa, ed25519)
+      t) # key type (rsa, ecdsa, ed25519)
       TYPE=${OPTARG}
       ;;
       ? | *) # Display help.
@@ -30,6 +30,8 @@ REVOKED=revoked_keys
 
 if [ $TYPE = "rsa" ]; then
     OPTIONS="-b 4096"
+elif [ $TYPE = "ecdsa" ]; then
+    OPTIONS="-b 384"
 elif [ $TYPE = "ed25519" ]; then
     OPTIONS="-a 100"
 else
