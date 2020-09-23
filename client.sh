@@ -2,7 +2,7 @@
 
 usage() { echo "$0 usage:" && grep " .)\ #" $0; exit 0; }
 [ $# -eq 0 ] && usage
-while getopts ":?p:c:u:h:t:" arg; do
+while getopts ":?p:c:u:h:t:n:" arg; do
   case $arg in
       p) # path/prefix for user private key
       OPT_PRIVATE=${OPTARG}
@@ -16,7 +16,10 @@ while getopts ":?p:c:u:h:t:" arg; do
       h) # hostname of machine to create keys for
       KEYHOST=${OPTARG}
       ;;
-      t) # key type (rsa, ed25519)
+      n) # optional EXTRA principals. Ex: -n "bob,fred,phil"
+      PRINCIPALS=${OPTARG}
+      ;;
+      t) # key type (ALL, rsa, ecdsa, ed25519).  Ex: -t "ecdsa ed25519"
       TYPE=${OPTARG}
       ;;
       ? | *) # Display help.
@@ -26,7 +29,15 @@ while getopts ":?p:c:u:h:t:" arg; do
   esac
 done
 
+set history off
+
 IDENTITY="$KEYUSER@$KEYHOST"     #string to use as identity in cert
+
+if [ "${PRINCIPALS}X" = "X" ]; then
+    PRINCIPALS=$KEYUSER
+else
+    PRINCIPALS="${KEYUSER},${PRINCIPALS}"
+fi
 
 [[ -d $KEYHOST ]] || mkdir $KEYHOST
 
@@ -40,32 +51,48 @@ if [ "${TYPE}X" = "X" ]; then
     TYPE=rsa
 fi
 
-CA=${OPT_CA}_${TYPE}
-PRIVATE=${OPT_PRIVATE}_${TYPE}
-PUBLIC=${PRIVATE}.pub
-CERT=${PRIVATE}-cert.pub
-
-if [ $TYPE = "rsa" ]; then
-    OPTIONS="-b 4096"
-elif [ $TYPE = "ed25519" ]; then
-    OPTIONS="-a 100"
+if [ "${KEYCYCLEPASS}X" = "X" ]; then
+    PASS=""
 else
-    echo "Unknown key type: $TYPE"
-    exit 1
+    PASS=$(echo -e "-N '${KEYCYCLEPASS}'")
 fi
 
-####Generate new key pair
-ssh-keygen $OPTIONS -t $TYPE -C "$IDENTITY" -f $PRIVATE
-
-###Add public key (if exists) to revoked keys
-if [ -f $PUBLIC ]; then
-    echo "Found $PUBLIC"
-    cat $PUBLIC >> $REVOKED
+if [ $TYPE = "ALL" ]; then
+    TYPELIST="rsa ecdsa ed25519"
+else
+    TYPELIST=$TYPE
 fi
 
-####Sign public key
-ssh-keygen -s $CA -n $KEYUSER -I $IDENTITY $PUBLIC
+for THISTYPE in $TYPELIST
+do
+    CA=${OPT_CA}_${THISTYPE}
+    PRIVATE=${OPT_PRIVATE}_${THISTYPE}
+    PUBLIC=${PRIVATE}.pub
+    CERT=${PRIVATE}-cert.pub
 
+    if [ $THISTYPE = "rsa" ]; then
+	OPTIONS="-b 4096"
+    elif [ $THISTYPE = "ecdsa" ]; then
+	OPTIONS="-b 384"
+    elif [ $THISTYPE = "ed25519" ]; then
+	OPTIONS="-a 100"
+    else
+	echo "Unknown key type: $THISTYPE"
+	exit 1
+    fi
+
+    ####Generate new key pair
+    sh -c "echo \"y\" | ssh-keygen $OPTIONS -t $THISTYPE -C \"$IDENTITY\" -f $PRIVATE $PASS"
+
+    ###Add public key (if exists) to revoked keys
+    if [ -f $PUBLIC ]; then
+	echo "Found $PUBLIC"
+	cat $PUBLIC >> $REVOKED
+    fi
+
+    ####Sign public key
+    ssh-keygen -s $CA -n $PRINCIPALS -I $IDENTITY $PUBLIC
+done
 cd $OWD
 
 
