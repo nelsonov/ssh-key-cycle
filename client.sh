@@ -82,6 +82,7 @@ do
     fi
 
     ####Generate new key pair
+    echo sh -c "echo \"y\" | ssh-keygen $OPTIONS -t $THISTYPE -C \"$IDENTITY\" -f $PRIVATE $PASS"
     sh -c "echo \"y\" | ssh-keygen $OPTIONS -t $THISTYPE -C \"$IDENTITY\" -f $PRIVATE $PASS"
 
     ###Add public key (if exists) to revoked keys
@@ -91,6 +92,7 @@ do
     fi
 
     ####Sign public key
+    echo ssh-keygen -s $CA -n $PRINCIPALS -I $IDENTITY $PUBLIC
     ssh-keygen -s $CA -n $PRINCIPALS -I $IDENTITY $PUBLIC
 done
 cd $OWD
