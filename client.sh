@@ -1,6 +1,15 @@
 #!/usr/local/bin/bash
 
-usage() { echo "$0 usage:" && grep " .)\ #" $0; exit 0; }
+usage() {
+    echo
+    echo "$0 usage:" && grep " .)\ #" $0
+    echo "Will prompt for passphrase unless environment varaible:"
+    echo "KEYCYCLEPASS"
+    echo "is set to the desired passphrase."
+    echo "To do this without leaving the passphrase in history,"
+    echo "see passphrase.py"
+    exit 0
+}
 [ $# -eq 0 ] && usage
 while getopts ":?p:c:u:h:t:n:" arg; do
   case $arg in
